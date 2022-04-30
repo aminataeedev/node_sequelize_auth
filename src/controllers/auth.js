@@ -4,29 +4,25 @@ const bcryptHelpers = require("../helpers/bcrypt");
 const { validationResult } = require("express-validator");
 
 const register = async (req, res, next) => {
-    try {
-        const { firstname, lastname, email, password } = req.body;
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-        const findUser = await User.findOne({ where: { email } });
-        if (findUser) {
-            return res.status(409).json({ status: "failed", message: "This email has already been registered." });
-        }
-        const encryptedPassword = await bcryptHelpers.encrypt(password, 10);
-        const user = await User.create({
-            firstname,
-            lastname,
-            email,
-            password: encryptedPassword,
-        });
-        const token = await jwtHelpers.tokenMaker(user.email);
-        user.token = token;
-        return res.status(201).json(user);
-    } catch (err) {
-        console.log("---", err);
+    const { firstname, lastname, email, password } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
+    const findUser = await User.findOne({ where: { email } });
+    if (findUser) {
+        return res.status(409).json({ status: "failed", message: "This email has already been registered." });
+    }
+    const encryptedPassword = await bcryptHelpers.encrypt(password, 10);
+    const user = await User.create({
+        firstname,
+        lastname,
+        email,
+        password: encryptedPassword,
+    });
+    const token = await jwtHelpers.tokenMaker(user.email);
+    user.token = token;
+    return res.status(201).json(user);
 };
 const signIn = async (req, res, next) => {
     const { email, password } = req.body;
